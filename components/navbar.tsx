@@ -1,8 +1,7 @@
 "use client";
 
 import { RootContext } from "@/context/root_context";
-import { deleteCookie } from "cookies-next";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useContext } from "react";
@@ -18,8 +17,7 @@ interface NavbarProps {}
 
 const NavbarComponent: React.FC<NavbarProps> = (props) => {
   const rootContext = useContext(RootContext);
-  const { data: session } = useSession()
-  console.log('Navbar Data: ', session)
+  const { data: session, status } = useSession();
   return (
     <nav className="flex flex-row items-center justify-between p-3 mx-auto my-2 w-full">
       {/* Search */}
@@ -47,7 +45,7 @@ const NavbarComponent: React.FC<NavbarProps> = (props) => {
           <LuBell size={24} />
         </div>
         <div className="dropdown dropdown-end w-[80%]">
-          <div tabIndex={0} role="button" className="">
+          <div tabIndex={0} role="button">
             <div className="flex flex-row cursor-pointer items-center">
               <div className="avatar flex-none max-w-[50%]">
                 <div className="w-8  h-8 rounded-full">
@@ -86,13 +84,7 @@ const NavbarComponent: React.FC<NavbarProps> = (props) => {
               <li>
                 <a
                   onClick={async () => {
-                    try {
-                      // cookiesStore.delete("token");
-                      deleteCookie("token");
-                      window.location.reload();
-                    } catch (err) {
-                      console.log(err);
-                    }
+                    await signOut();
                   }}
                 >
                   <LuLogOut />

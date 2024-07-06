@@ -2,10 +2,10 @@
 
 import { Field, Form, Formik } from "formik";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isEmpty } from "lodash";
-import { signIn } from "@/app/lib/auth";
-import { authenticated } from "../actions/authentication";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 interface AuthenticationPageProps {
   callbackUrl: string;
@@ -17,13 +17,26 @@ export interface ILoginForm {
 }
 
 const SignInSchema = Yup.object().shape({
-  email: Yup.string().email("Invalid email").required("Required"),
-  password: Yup.string().min(5, "Password too short").required("Required"),
+  email: Yup.string()
+    .email("Format E-Mail Anda salah")
+    .required("Harap masukkan E-Mail"),
+  password: Yup.string()
+    .min(5, "Password too short")
+    .required("Harap massukkan password"),
 });
 
 const AuthenticationPage: React.FC<AuthenticationPageProps> = (props) => {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error && !isEmpty(error)) {
+      setErrorMessage(error);
+    }
+  }, []);
+
   return (
     <main className="w-full flex h-screen items-center justify-center bg-neutral-content">
       <div className="p-6 bg-white rounded-lg md:w-4/12 w-10/12 shadow-lg">
@@ -40,10 +53,13 @@ const AuthenticationPage: React.FC<AuthenticationPageProps> = (props) => {
               }}
               validationSchema={SignInSchema}
               onSubmit={async (values: ILoginForm) => {
-                const formData = new FormData();
-                formData.append("email", values.email);
-                formData.append("password", values.password);
-                await authenticated(formData);
+                setIsLoading(true);
+                await signIn("credentials", {
+                  email: values.email,
+                  password: values.password,
+                  redirect: true,
+                });
+                setIsLoading(false);
               }}
             >
               {({ errors, touched, isSubmitting, isValid }) => {
